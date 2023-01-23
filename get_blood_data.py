@@ -16,11 +16,13 @@ RECORDPASSWORD = 'xxxx'
 
 *** エラー関連 ***
 実行すると、
+
 selenium.common.exceptions.StaleElementReferenceException: Message: stale element reference: element is not attached to the page document
 
-とエラー表示された際は、待ち時間をより長く設定してみてください。
-本来は、状態変更をみて設定するのが良いのでしょうが、現状ではそこまでは行っていません。
+とエラーがでる場合があります。
+ページの遷移が間に合っていないと思われますので、待ち時間をより長く設定してみてください。
 
+本来は、状態変更をみるようにするのが良いのでしょうが、現状ではそこまでは行っていません。
 そのうち、取得時間の節約やスキルアップのために、明示的な待機（WebDriverWait.until()）などを組み込むかもしれません。
 
 '''
