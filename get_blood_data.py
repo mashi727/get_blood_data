@@ -25,6 +25,9 @@ selenium.common.exceptions.StaleElementReferenceException: Message: stale elemen
 本来は、状態変更をみるようにするのが良いのでしょうが、現状ではそこまでは行っていません。
 そのうち、取得時間の節約やスキルアップのために、明示的な待機（WebDriverWait.until()）などを組み込むかもしれません。
 
+ラブラッドサイトの解析は、Selenium IDEを使用しました。
+これがなかったら、解析の時間がもっとかかっていたと思われます。
+
 '''
 import time
 import collections
