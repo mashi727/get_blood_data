@@ -3,6 +3,7 @@ import collections
 import numpy as np
 import pandas as pd
 from tabulate import tabulate
+# dotenvに必要
 import os
 from dotenv import load_dotenv
 
@@ -20,23 +21,31 @@ from selenium.webdriver.common.by import By
 driver = webdriver.Chrome()
 
 
+# Passwordなどは、別ファイルから読み込み
 load_dotenv('.password')
 BLOODCODE = os.environ.get("BLOODCODE")
 PASSWORD = os.environ.get("PASSWORD")
 RECORDPASSWORD = os.environ.get("RECORDPASSWORD")
 
+# 待ち時間の設定
+# ページ遷移を伴う場合
+wait_for_page = 2
+# ページ遷移を伴わない場合
+wait_for_nopage = 0.7
+
+
 # ページを開く
 driver.get('https://www.kenketsu.jp/RecordLogin?refURL=https%3A%2F%2Fwww.kenketsu.jp%2F')
 
-
+# 献血記録の確認までのログイン処理
 driver.find_element(By.NAME, "Login:j_id78:j_id80").send_keys(BLOODCODE)
 driver.find_element(By.NAME, "Login:j_id78:j_id82").send_keys(PASSWORD)
 driver.find_element(By.LINK_TEXT, 'ログイン').click()
-time.sleep(3)
+time.sleep(wait_for_page)
 driver.find_element(By.NAME, "RecordLogin:RecordLoginForm:kenketsuPassword").send_keys(RECORDPASSWORD)
-time.sleep(1)
+time.sleep(wait_for_nopage)
 driver.find_element(By.LINK_TEXT, '献血記録を確認する').click()
-time.sleep(1)
+time.sleep(wait_for_nopage)
 #
 # 「献血記録を確認」の初期画面では、最新のデータから3回分の血液などのデータが表示され、
 # 「過去の献血履歴」ページでは10回分の献血日と献血種別などの一覧（血液などのデータなし）が表示される。
@@ -54,14 +63,14 @@ n = len(kenketsu_date) // 10 # 私の場合2023.1の時点で8（82回分のデ�
 #     各ページごと10回分表示されるので、献血日のデータ数に対して、10による商をもとめて、めくる回数を決定している。
 # ２．過去の献血履歴（10回分の一覧表示）のページに遷移して、１で求めた回数分ページをめくり最も古い血液などのデータを表示するページ（3回分）に遷移する。
 driver.find_element(By.LINK_TEXT, '過去の献血履歴はこちら').click() # 過去の献血履歴（10回分の献血日と献血種別などが表示される）のページに遷移する。
-time.sleep(1)
+time.sleep(wait_for_page)
 # ３．ページをめくる回数が決まり過去の献血履歴の画面が表示できたので、もっとも古い献血日を含む一覧画面に遷移する。
 for i in range(n):
     driver.find_element(By.ID, 'RecordList:j_id41:RecordList:j_id50').click()
-    time.sleep(0.7)
+    time.sleep(wait_for_nopage)
 # ４．もっとも古い献血のデータの表示画面に遷移する。
 driver.find_element(By.ID, 'RecordList:j_id41:RecordList:j_id54:1:inspectionResult').click()
-time.sleep(1)
+time.sleep(wait_for_page)
 
 
 
@@ -109,14 +118,14 @@ for turn in range(turn_num):
     kenketsu_data_reshape, index = get_data(times)
     df = df.append(pd.DataFrame(data=kenketsu_data_reshape, index = index, columns=cols))
     print(tabulate(df, df.columns,tablefmt='github', showindex=True))
-    time.sleep(1)
+    time.sleep(wait_for_page)
     # 献血データを3つすすめる
     for i in range(3):
         driver.find_element(By.CSS_SELECTOR, '.is-next').click()
-        time.sleep(0.7)
+        time.sleep(wait_for_nopage)
     # すすめた期間の献血データを表示する(ボタンをクリック)
     driver.find_element(By.ID, 'RecordInspectionResult:j_id48:j_id49').click()
-    time.sleep(0.7)
+    time.sleep(wait_for_nopage)
     times = times + 1
 
 
@@ -160,5 +169,5 @@ driver.find_element(By.ID, 'RecordInspectionResult:j_id48:j_id49').click()
 
 '''
 
-time.sleep(5)
+time.sleep(wait_for_page)
 driver.quit()
