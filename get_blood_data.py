@@ -31,19 +31,26 @@ wait_for_nopage = 0.7
 
 
 def login_and_get_param():
-    """_summary_
+    """
+    この関数は
     
-    この関数では、
     1. 献血データの確認のためのログイン処理
-    2. 2009.3.15以降の献血回数を返す
+    2. 2009.3.15以降の献血回数とすべての献血回数を返す
+    
     ということを行います。
     
     Returns:
-        int : turn_num
+        int : num_of_kenketsu
+        int : num_of_kenketsu_all
     """
 
-
     # ログイン用のパスワードなどを別ファイル(.password)から読み込み
+    ''' .passwordファイルには
+    BLOODCODE = 'xxxxxxxxxx'
+    PASSWORD = 'xxxxxxxx'
+    RECORDPASSWORD = 'xxxx'
+    と記述する。
+    '''
     load_dotenv('.password')
     BLOODCODE = os.environ.get("BLOODCODE")
     PASSWORD = os.environ.get("PASSWORD")
@@ -68,8 +75,7 @@ def login_and_get_param():
     # また、血液の分析結果の項目が2009.3.15以降変更となっている。
     # 
     # このツールでは2009.3.15以降のデータのみ取得することとする。
-    # ということで、やることは以下のとおり。
-    # １．2009.3.15以降の献血回数を取得する。
+    # 2009.3.15以降の献血回数の取得
     date_of_kenketsu = driver.find_elements(By.CLASS_NAME, 'mod-past-data__date') # 献血回数（すべての献血日の数を取得）
     num_of_kenketsu_all = len(date_of_kenketsu)
     num_of_kenketsu = 0
@@ -88,8 +94,18 @@ def login_and_get_param():
     return num_of_kenketsu, num_of_kenketsu_all # 私の場合、2023.1.23の時点で2009年の変更以降の献血回数は81回
 
 def get_data(times, num_of_kenketsu_all):
-    # 表示されている血液の分析結果などを取得する（3回分）。
-    # 取得したデータは、日付をインデックスとして献血種別（1）、血圧、脈拍（3）及び血液の分析結果（15）をデータとして格納（計19種のデータとなる）
+    """
+    表示されている3回分の血液の分析結果などを取得する。
+    取得したデータは、日付をインデックスとして献血種別（1）、血圧、脈拍（3）及び血液の分析結果（15）をデータとして格納（計19種のデータとなる）
+    
+    Args:
+        times (int): データを取得する回数
+        num_of_kenketsu_all (int): 過去に献血した回数、最新のデータがリストの最も後ろになっているため、forループの開始用に使用する。
+
+    Returns:
+        kenketsu_data_reshape : 表示されている3回分データを整形してnumpyの配列として返す
+        index : index用に、3回分の日付をリストとして返す
+    """
     # インデックス用の献血日
     date_of_kenketsu = driver.find_elements(By.CLASS_NAME, 'mod-past-data__date') # 表示されている献血日の取得（表示されていない日を取得すると、空になる）
     # 献血種別
@@ -99,10 +115,6 @@ def get_data(times, num_of_kenketsu_all):
     index = [] # 献血日
     # 取得したデータのリストを作成する。（3回分を取得するので実行されるたびに初期化する）
     kenketsu_data = []
-    # 回数のチェック用
-    # print('回数',3*(times -1),3*times)
-    # range(start, stop, step)
-    #for i in range(3*(times -1), 3*times, -1):
     for i in range(num_of_kenketsu_all+2-(times*3), num_of_kenketsu_all+2-((times+1)*3), -1):
         index.append(dt.strptime(date_of_kenketsu[i].text, '%Y/%m/%d')) # 日付の文字列をdatetimeに変換
         kenketsu_data.append(kenketsu_kind[i].text)
@@ -129,8 +141,7 @@ def main():
         # チェック用にdfを表示する。
         # print(tabulate(df, df.columns,tablefmt='github', showindex=True))
         time.sleep(wait_for_page)
-        # データを取得してページを進めるので、最後のデータを取得した後にページを進める必要はないため
-        # 以下の処理を行っている。
+        # データを取得してページを進めており、最後のデータを取得した後にページを進める必要はないためにif文を入れている。
         if times < turn_num:
             # 献血データが重複しないよう3つずつすすめる。
             for i in range(3):
@@ -142,6 +153,7 @@ def main():
         else:
             pass
     date = dt(2009, 3, 14)
+    # 2009/3/15以降の献血回数が3で割り切れないとき、古いデータが最大2行紛れ込む可能性があるため以下の処理を追加する。
     df = df[df.index > date]
     print(tabulate(df, df.columns,tablefmt='github', showindex=True))
     df.to_csv('./blood_data.csv')
