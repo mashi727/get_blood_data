@@ -63,7 +63,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # setAutoVisible(y=True)を有効にすると、IndexError: boolean index did not match indexed array along dimension 0;
         # dimension is 39 but corresponding boolean dimension is 40 がでます。
         #setprop = lambda x: (x.showGrid(x=True, y=True, alpha = 1), x.addLegend(offset=(0,5.5)), x.showGrid(x=True, y=True))
-        styles = {'color':'white','font-size':'20px', 'font-style':'bold'}     
+        styles = {'color':'white','font-size':'20px', 'font-style':'bold'}
           
         graph_id = self.win.addPlot()
         #graph_id.setTitle('<font size=\'5\' color=\'#FFFFFF\'>'+ 'Histogram' +'</font>')
