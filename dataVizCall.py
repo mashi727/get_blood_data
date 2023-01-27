@@ -136,17 +136,23 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         graph_id.addItem(pg.PlotDataItem(self.dt, s, pen='y', symbol='o', symbolBrush=(255, 255, 0,100)))
         graph_id.addItem(pg.PlotDataItem(self.dt, s_rolling, pen=pg.mkPen((255,255,255,128), width=5)))
         if cols == 'GALB':
-            graph_id.setYRange(10,17)
-            inf_upper = pg.InfiniteLine(movable=False, angle=0, pen=(255, 0, 0), hoverPen=(0,200,0),label='{value:0.2f}%')
-            inf_upper.setPos(pg.Point(0, 16.5))
-            graph_id.addItem(inf_upper)
+            self.df['GALB_upper']=17
+            graph_id.addItem(pg.PlotDataItem(self.dt, self.df['GALB_upper'], pen='r', symbol=None))
+            #graph_id.setYRange(10,17)
+            #inf_upper = pg.InfiniteLine(movable=False, angle=0, pen=(255, 0, 0), hoverPen=(0,200,0),label='{value:0.2f}%')
+            #inf_upper.setPos(pg.Point(0, 16.5))
+            #graph_id.addItem(inf_upper)
         elif cols == 'ALT（GPT）':
-            inf_upper = pg.InfiniteLine(movable=False, angle=0, pen=(255, 0, 0), hoverPen=(0,200,0),label='{value:0.2f}IU/L')
-            inf_upper.setPos(pg.Point(0, 8))
-            graph_id.addItem(inf_upper)
-            inf_lower = pg.InfiniteLine(movable=False, angle=0, pen=(255, 0, 0), hoverPen=(0,200,0),label='{value:0.2f}IU/L')
-            inf_lower.setPos(pg.Point(0, 49))
-            graph_id.addItem(inf_lower)
+            self.df['ALT_upper']=49
+            self.df['ALT_lower']=8
+            ALT_upper = pg.PlotDataItem(self.dt, self.df['ALT_upper'], pen='r', symbol=None)
+            ALT_lower = pg.PlotDataItem(self.dt, self.df['ALT_lower'], pen='r', symbol=None)
+            graph_id.addItem(ALT_upper)
+            graph_id.addItem(ALT_lower)
+            brushes = [0.5, (100, 100, 255), 0.5]
+            fills = [pg.FillBetweenItem(ALT_upper, ALT_lower, brushes[1])]
+            graph_id.setZValue(1000)
+            graph_id.addItem(fills)
         elif cols == 'γ-GTP':
             inf_upper = pg.InfiniteLine(movable=False, angle=0, pen=(255, 0, 0), hoverPen=(0,200,0),label='{value:0.2f}IU/L')
             inf_upper.setPos(pg.Point(0, 9))
@@ -290,8 +296,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def update_region(self, window, viewRange):
         self.region.setRegion(viewRange[0])
-
-
 
 def main():
     app = QApplication(sys.argv)
