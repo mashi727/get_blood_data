@@ -131,28 +131,44 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     # データを扱うコードのみを記述
     def plot_xy(self, cols, graph_id):
-        s = self.df[cols]
-        s_rolling = self.df[cols].rolling(5).mean()
-        graph_id.addItem(pg.PlotDataItem(self.dt, s, pen='y', symbol='o', symbolBrush=(255, 255, 0,100)))
-        graph_id.addItem(pg.PlotDataItem(self.dt, s_rolling, pen=pg.mkPen((255,255,255,128), width=5)))
+        #s = self.df[cols]
+        #s_rolling = self.df[cols].rolling(5).mean()
         if cols == 'GALB':
             self.df['GALB_upper']=17
             graph_id.addItem(pg.PlotDataItem(self.dt, self.df['GALB_upper'], pen='r', symbol=None))
-            #graph_id.setYRange(10,17)
-            #inf_upper = pg.InfiniteLine(movable=False, angle=0, pen=(255, 0, 0), hoverPen=(0,200,0),label='{value:0.2f}%')
-            #inf_upper.setPos(pg.Point(0, 16.5))
-            #graph_id.addItem(inf_upper)
+            graph_id.setYRange(10,17)
+            inf_upper = pg.InfiniteLine(movable=False, angle=0, pen=(255, 0, 0), hoverPen=(0,200,0),label='{value:0.2f}%')
+            inf_upper.setPos(pg.Point(0, 16.5))
+            graph_id.addItem(inf_upper)
         elif cols == 'ALT（GPT）':
+            cm2 = pg.colormap.get('jet', source='matplotlib')# for example
+            cm = pg.colormap.get('CET-L19')
+            #cm2 = pg.colormap.get('CET-L19')
+            #cm.setMappingMode('repeat') # set mapping mode
+            center_num = ((49-8)/2)
+            pen0 = cm.getPen( span=(-8., 49.), width=2)
+            #brush0 = cm2.getBrush( span=(8,49),orientation='horizontal')
+            #print(brush0)
+            graph_id.addItem(pg.PlotDataItem(self.dt, self.df[cols], pen=pen0, symbol='o', symbolPen=pen0,symbolBrush=(200,   0,   0),symbolSize=10))
+            graph_id.addItem(pg.PlotDataItem(self.dt, self.df[cols].rolling(5).mean(), pen=pg.mkPen((255,255,255,128), width=5)))
             self.df['ALT_upper']=49
             self.df['ALT_lower']=8
-            ALT_upper = pg.PlotDataItem(self.dt, self.df['ALT_upper'], pen='r', symbol=None)
-            ALT_lower = pg.PlotDataItem(self.dt, self.df['ALT_lower'], pen='r', symbol=None)
+            ALT_upper = pg.PlotDataItem(self.dt, self.df['ALT_upper'], pen='g', symbol=None)
+            ALT_lower = pg.PlotDataItem(self.dt, self.df['ALT_lower'], pen='g', symbol=None)
             graph_id.addItem(ALT_upper)
             graph_id.addItem(ALT_lower)
-            brushes = [0.5, (100, 100, 255), 0.5]
-            fills = [pg.FillBetweenItem(ALT_upper, ALT_lower, brushes[1])]
-            graph_id.setZValue(1000)
+            brushes = [0.5, (0,205,0, 30), 0.5]
+            fills = pg.FillBetweenItem(ALT_upper, ALT_lower, brushes[1])
+            fills.setZValue(-100)
             graph_id.addItem(fills)
+            inf_upper = pg.InfiniteLine(movable=False, angle=0, pen=(0, 255, 0), hoverPen=(0,200,0),label='{value:0.2f}%')
+            inf_lower = pg.InfiniteLine(movable=False, angle=0, pen=(0, 255, 0), hoverPen=(0,200,0),label='{value:0.2f}%')
+            inf_upper.setPos(pg.Point(0, 49))
+            inf_lower.setPos(pg.Point(0, 8))
+            graph_id.addItem(inf_upper)
+            graph_id.addItem(inf_lower)
+
+
         elif cols == 'γ-GTP':
             inf_upper = pg.InfiniteLine(movable=False, angle=0, pen=(255, 0, 0), hoverPen=(0,200,0),label='{value:0.2f}IU/L')
             inf_upper.setPos(pg.Point(0, 9))
