@@ -36,6 +36,7 @@ import pandas as pd
 from tabulate import tabulate
 from datetime import datetime as dt
 from datetime import date
+import math
 
 # dotenvに必要
 import os
@@ -56,9 +57,9 @@ driver = webdriver.Chrome()
 
 # 待ち時間の設定
 # ページ遷移を伴う場合
-wait_for_page = 2
+wait_for_page = 3
 # ページ遷移を伴わない場合
-wait_for_nopage = 1
+wait_for_nopage = 1.5
 
 
 def login_and_get_param():
@@ -161,6 +162,8 @@ def main():
     # この処理により、
     # 81回だと27回のめくりで、2009.3.15より前のデータは含まれない。
     # 2009.3.15より前のデータは、それぞれ、82回だと2回分、83回だと1回分、84回だと0回分含まれることとなる。
+    turn_num = math.ceil(num_of_kenketsu/3) # 28
+    '''
     if num_of_kenketsu % 3 == 0:
         turn_num = num_of_kenketsu // 3
     elif num_of_kenketsu % 3 == 1:
@@ -169,6 +172,7 @@ def main():
         turn_num = (num_of_kenketsu + 1) // 3
     else:
         pass
+    '''
     # 1からturn_numまでループ処理にて、データの取得 → データのめくり（重複しないよう3回分）を行なう。
     for times in range(1,turn_num+1,1):
         kenketsu_data_reshape, index = get_data(times, num_of_kenketsu_all)
