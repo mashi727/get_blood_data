@@ -57,9 +57,9 @@ driver = webdriver.Chrome()
 
 # 待ち時間の設定
 # ページ遷移を伴う場合
-wait_for_page = 3
+wait_for_page = 1
 # ページ遷移を伴わない場合
-wait_for_nopage = 1.5
+wait_for_nopage = 0.7
 
 
 def login_and_get_param():
@@ -104,12 +104,21 @@ def login_and_get_param():
     num_of_kenketsu = 0
     for i in range(len(date_of_kenketsu)):
         # 表示を3の倍数とするために作られたデータは''が入っておりValueErrorになるので、エラー処理を行なう。
+        # 
+        # 【2023.3.6追加】
+        # うむ、今回は表示が3の倍数になっていない。。。
+        # 今回は、By.CLASS_NAME, 'mod-past-data__date'が86になるよ。
+        # 
+        # #
         try:
             # .textだとaria-hidden="true"の値が''で取得されるので、get_attribute("textContent")を使用する必要がある。
             kenketsubi = dt.strptime(date_of_kenketsu[i].get_attribute("textContent"), '%Y/%m/%d').date()
+            
             change_date = date(2009, 3, 14) # 血液の検査結果が変更になった2009.3.15以降を前日より大きいと表現した。
             if (kenketsubi > change_date) == True:
+                # 2009.3.15以降（kenketsubi > change_date）であれば、カウントを増やす
                 num_of_kenketsu = num_of_kenketsu + 1
+                # print(num_of_kenketsu, kenketsubi)
             else:
                 pass 
         except ValueError as e:
@@ -147,9 +156,25 @@ def get_data(times, num_of_kenketsu_all):
         kenketsu_data.append(kenketsu_raw_data[i].text.split()) # [a b c]となっているので、splitが必要
         # 各種別のデータが3つずつの組になっているので、献血日ごとのデータに並び替える
         new_list = list(flatten(kenketsu_data))[2::3] + list(flatten(kenketsu_data))[1::3] +list(flatten(kenketsu_data))[0::3]
-    kenketsu_data_reshape = np.array(new_list).reshape(3,19).tolist()
-    return kenketsu_data_reshape, index
-
+    try:
+        if len(np.array(new_list)) == 57:
+            kenketsu_data_reshape = np.array(new_list).reshape(3,19).tolist()
+            return kenketsu_data_reshape, index
+        else:
+            # 献血記録の表示について、2009.3.14以前と以後が同時に表示される場合、検査項目が異なるため20項目のデータが表示され
+            # 非該当のデータは - となるので、全データ数が60となり20個の3次元のデータにreshapeする。
+            # 2009.3.14以前のデータの紛れ込み分は後ほど削除するので、ここでは5番目の「-」の列を削除する。
+            #
+            ### numpy.delete(arr, obj, axis=None)の使いかた ###
+            # arr: 入力配列
+            # obj: 削除する行番号や列番号を整数、スライス、リスト（配列）で指定
+            # axis: 削除対象となる軸（次元）
+            # #
+            kenketsu_data_temp = np.array(new_list).reshape(3,20).tolist()
+            kenketsu_data_reshape = np.delete(kenketsu_data_temp, 5, 1)
+            return kenketsu_data_reshape, index
+    except ValueError as e:
+        pass
 
 def main():
     # ログインして2009.3.15以降とすべての献血回数を求める。
