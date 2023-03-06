@@ -12,6 +12,29 @@ from datetime import datetime
 
 from dataVizUi import Ui_MainWindow
 
+# 基準値の設定
+standard_data = {}
+standard_data['血圧（最高）'] = 130
+standard_data['血圧（最低）'] = 85
+standard_data['ALT（GPT）'] = (8,49,'IU/L')
+standard_data['γ-GTP'] = (9,68,'IU/L')
+standard_data['総蛋白TP'] = (6.6,8.2, 'g/dL')
+standard_data['アルブミンALB'] = (4.0,5.1,'g/dL')
+standard_data['ALB/G'] = (1.3,2.1,'')
+standard_data['CHOL'] = (140,259,'mg/dL')
+standard_data['GALB'] = (16.5,'%')
+standard_data['RBC'] = (418,560,'x10^4 /μL')
+standard_data['Hb'] = (12.7,17.0,'g/dL')
+standard_data['Ht'] = (38.8,50.0,'%')
+standard_data['MCV'] = (83.0,99.5,'fL')
+standard_data['MCH'] = (26.8,33.5,'pg')
+standard_data['MCHC'] = (31.7,35.2,'%')
+standard_data['WBC'] = (38,89,'x10^2 /μL')
+standard_data['PLT'] = (17.0,36.5,'x10^4/μL')
+
+
+
+
 class TimeAxisItem(pg.AxisItem):
     '''
     時間をを表示する。
@@ -63,8 +86,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.region.sigRegionChanged.connect(self.update_region_change)
         #self.region.sigRegionChanged.connect(lambda: self.update_region_change())
         self.region.setRegion([minx, maxx])
-
-        
+                
 
     def init_ui(self):
         # Windowサイズを設定
@@ -129,144 +151,94 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             if (i + 1) % num_of_cols == 0:
                 self.graphicsView.nextRow()
 
+    def draw_graph(self,cols,graph_id):
+            upper = cols+'_upper'
+            lower = cols+'_lower'
+            cm2 = pg.colormap.get('jet', source='matplotlib')# for example
+            cm = pg.colormap.get('CET-L19')
+            #cm2 = pg.colormap.get('CET-L19')
+            #cm.setMappingMode('repeat') # set mapping mode
+            center_num = ((standard_data[cols][1]-standard_data[cols][0])/2)
+            pen0 = cm.getPen( span=(-1*standard_data[cols][0], standard_data[cols][1]), width=2)
+            #brush0 = cm2.getBrush( span=(8,49),orientation='horizontal')
+            #print(brush0)
+            graph_id.addItem(pg.PlotDataItem(self.dt, self.df[cols], pen=pen0, symbol='o', symbolPen=None,symbolBrush=(200,  200,   200),symbolSize=10))
+            graph_id.addItem(pg.PlotDataItem(self.dt, self.df[cols].rolling(5).mean(), pen=pg.mkPen((255,255,255,128), width=5)))
+            self.df[upper]=standard_data[cols][1]
+            self.df[lower]=standard_data[cols][0]
+
+            upper = pg.PlotDataItem(self.dt, self.df[upper], pen='g', symbol=None)
+            lower = pg.PlotDataItem(self.dt, self.df[lower], pen='g', symbol=None)
+            graph_id.addItem(upper)
+            graph_id.addItem(lower)
+            brushes = [0.5, (0,205,0, 30), 0.5]
+            fills = pg.FillBetweenItem(upper, lower, brushes[1])
+            fills.setZValue(-100)
+            graph_id.addItem(fills)
+            inf_upper = pg.InfiniteLine(movable=False, angle=0, pen=(0, 255, 0), hoverPen=(0,200,0),label='{value:0.2f} '+standard_data[cols][2])
+            inf_lower = pg.InfiniteLine(movable=False, angle=0, pen=(0, 255, 0), hoverPen=(0,200,0),label='{value:0.2f} '+standard_data[cols][2])
+            inf_upper.setPos(pg.Point(0, standard_data[cols][1]))
+            inf_lower.setPos(pg.Point(0, standard_data[cols][0]))
+            graph_id.addItem(inf_upper)
+            graph_id.addItem(inf_lower)
+
     # データを扱うコードのみを記述
     def plot_xy(self, cols, graph_id):
         #s = self.df[cols]
         #s_rolling = self.df[cols].rolling(5).mean()
-        if cols == 'GALB':
+        if cols == 'GALB':        
             self.df['GALB_upper']=17
             graph_id.addItem(pg.PlotDataItem(self.dt, self.df['GALB_upper'], pen='r', symbol=None))
             graph_id.setYRange(10,17)
             inf_upper = pg.InfiniteLine(movable=False, angle=0, pen=(255, 0, 0), hoverPen=(0,200,0),label='{value:0.2f}%')
             inf_upper.setPos(pg.Point(0, 16.5))
             graph_id.addItem(inf_upper)
+        
         elif cols == 'ALT（GPT）':
-            cm2 = pg.colormap.get('jet', source='matplotlib')# for example
-            cm = pg.colormap.get('CET-L19')
-            #cm2 = pg.colormap.get('CET-L19')
-            #cm.setMappingMode('repeat') # set mapping mode
-            center_num = ((49-8)/2)
-            pen0 = cm.getPen( span=(-8., 49.), width=2)
-            #brush0 = cm2.getBrush( span=(8,49),orientation='horizontal')
-            #print(brush0)
-            graph_id.addItem(pg.PlotDataItem(self.dt, self.df[cols], pen=pen0, symbol='o', symbolPen=pen0,symbolBrush=(200,   0,   0),symbolSize=10))
-            graph_id.addItem(pg.PlotDataItem(self.dt, self.df[cols].rolling(5).mean(), pen=pg.mkPen((255,255,255,128), width=5)))
-            self.df['ALT_upper']=49
-            self.df['ALT_lower']=8
-            ALT_upper = pg.PlotDataItem(self.dt, self.df['ALT_upper'], pen='g', symbol=None)
-            ALT_lower = pg.PlotDataItem(self.dt, self.df['ALT_lower'], pen='g', symbol=None)
-            graph_id.addItem(ALT_upper)
-            graph_id.addItem(ALT_lower)
-            brushes = [0.5, (0,205,0, 30), 0.5]
-            fills = pg.FillBetweenItem(ALT_upper, ALT_lower, brushes[1])
-            fills.setZValue(-100)
-            graph_id.addItem(fills)
-            inf_upper = pg.InfiniteLine(movable=False, angle=0, pen=(0, 255, 0), hoverPen=(0,200,0),label='{value:0.2f}%')
-            inf_lower = pg.InfiniteLine(movable=False, angle=0, pen=(0, 255, 0), hoverPen=(0,200,0),label='{value:0.2f}%')
-            inf_upper.setPos(pg.Point(0, 49))
-            inf_lower.setPos(pg.Point(0, 8))
-            graph_id.addItem(inf_upper)
-            graph_id.addItem(inf_lower)
-
+            self.draw_graph(cols,graph_id)
 
         elif cols == 'γ-GTP':
-            inf_upper = pg.InfiniteLine(movable=False, angle=0, pen=(255, 0, 0), hoverPen=(0,200,0),label='{value:0.2f}IU/L')
-            inf_upper.setPos(pg.Point(0, 9))
-            graph_id.addItem(inf_upper)
-            inf_lower = pg.InfiniteLine(movable=False, angle=0, pen=(255, 0, 0), hoverPen=(0,200,0),label='{value:0.2f}IU/L')
-            inf_lower.setPos(pg.Point(0, 68))
-            graph_id.addItem(inf_lower)
+            self.draw_graph(cols,graph_id)
+            
         elif cols == '総蛋白TP':
-            inf_upper = pg.InfiniteLine(movable=False, angle=0, pen=(255, 0, 0), hoverPen=(0,200,0),label='{value:0.2f}g/dL')
-            inf_upper.setPos(pg.Point(0, 6.6))
-            graph_id.addItem(inf_upper)
-            inf_lower = pg.InfiniteLine(movable=False, angle=0, pen=(255, 0, 0), hoverPen=(0,200,0),label='{value:0.2f}g/dL')
-            inf_lower.setPos(pg.Point(0, 8.2))
-            graph_id.addItem(inf_lower)
+            self.draw_graph(cols,graph_id)
+            
         elif cols == 'アルブミンALB':
-            inf_upper = pg.InfiniteLine(movable=False, angle=0, pen=(255, 0, 0), hoverPen=(0,200,0),label='{value:0.2f}g/dL')
-            inf_upper.setPos(pg.Point(0, 4.0))
-            graph_id.addItem(inf_upper)
-            inf_lower = pg.InfiniteLine(movable=False, angle=0, pen=(255, 0, 0), hoverPen=(0,200,0),label='{value:0.2f}g/dL')
-            inf_lower.setPos(pg.Point(0, 5.1))
-            graph_id.addItem(inf_lower)
+            self.draw_graph(cols,graph_id)
+            
         elif cols == 'ALB/G':
-            inf_upper = pg.InfiniteLine(movable=False, angle=0, pen=(255, 0, 0), hoverPen=(0,200,0),label='{value:0.2f}')
-            inf_upper.setPos(pg.Point(0, 1.3))
-            graph_id.addItem(inf_upper)
-            inf_lower = pg.InfiniteLine(movable=False, angle=0, pen=(255, 0, 0), hoverPen=(0,200,0),label='{value:0.2f}')
-            inf_lower.setPos(pg.Point(0, 2.1))
-            graph_id.addItem(inf_lower)
+            self.draw_graph(cols,graph_id)
+        
         elif cols == 'CHOL':
-            inf_upper = pg.InfiniteLine(movable=False, angle=0, pen=(255, 0, 0), hoverPen=(0,200,0),label='{value:0.2f}mg/dL')
-            inf_upper.setPos(pg.Point(0, 140))
-            graph_id.addItem(inf_upper)
-            inf_lower = pg.InfiniteLine(movable=False, angle=0, pen=(255, 0, 0), hoverPen=(0,200,0),label='{value:0.2f}mg/dL')
-            inf_lower.setPos(pg.Point(0, 259))
-            graph_id.addItem(inf_lower)
+            self.draw_graph(cols,graph_id)
+            
         elif cols == 'RBC':
-            inf_upper = pg.InfiniteLine(movable=False, angle=0, pen=(255, 0, 0), hoverPen=(0,200,0),label='{value:0.2f}x10^4/μL')
-            inf_upper.setPos(pg.Point(0, 560))
-            graph_id.addItem(inf_upper)
-            inf_lower = pg.InfiniteLine(movable=False, angle=0, pen=(255, 0, 0), hoverPen=(0,200,0),label='{value:0.2f}x10^4/μL')
-            inf_lower.setPos(pg.Point(0, 418))
-            graph_id.addItem(inf_lower)
+            self.draw_graph(cols,graph_id)
+            
         elif cols == 'Hb':
-            inf_upper = pg.InfiniteLine(movable=False, angle=0, pen=(255, 0, 0), hoverPen=(0,200,0),label='{value:0.2f}g/dL')
-            inf_upper.setPos(pg.Point(0, 17.0))
-            graph_id.addItem(inf_upper)
-            inf_lower = pg.InfiniteLine(movable=False, angle=0, pen=(255, 0, 0), hoverPen=(0,200,0),label='{value:0.2f}g/dL')
-            inf_lower.setPos(pg.Point(0, 12.7))
-            graph_id.addItem(inf_lower)
+            self.draw_graph(cols,graph_id)
+            
         elif cols == 'Ht':
-            inf_upper = pg.InfiniteLine(movable=False, angle=0, pen=(255, 0, 0), hoverPen=(0,200,0),label='{value:0.2f}%')
-            inf_upper.setPos(pg.Point(0, 50.0))
-            graph_id.addItem(inf_upper)
-            inf_lower = pg.InfiniteLine(movable=False, angle=0, pen=(255, 0, 0), hoverPen=(0,200,0),label='{value:0.2f}%')
-            inf_lower.setPos(pg.Point(0, 38.8))
-            graph_id.addItem(inf_lower)
+            self.draw_graph(cols,graph_id)
+            
         elif cols == 'MCV':
-            inf_upper = pg.InfiniteLine(movable=False, angle=0, pen=(255, 0, 0), hoverPen=(0,200,0),label='{value:0.2f}fL')
-            inf_upper.setPos(pg.Point(0, 99.5))
-            graph_id.addItem(inf_upper)
-            inf_lower = pg.InfiniteLine(movable=False, angle=0, pen=(255, 0, 0), hoverPen=(0,200,0),label='{value:0.2f}fL')
-            inf_lower.setPos(pg.Point(0, 83.0))
-            graph_id.addItem(inf_lower)
+            self.draw_graph(cols,graph_id)
+            
         elif cols == 'MCH':
-            inf_upper = pg.InfiniteLine(movable=False, angle=0, pen=(255, 0, 0), hoverPen=(0,200,0),label='{value:0.2f}pg')
-            inf_upper.setPos(pg.Point(0, 33.5))
-            graph_id.addItem(inf_upper)
-            inf_lower = pg.InfiniteLine(movable=False, angle=0, pen=(255, 0, 0), hoverPen=(0,200,0),label='{value:0.2f}pg')
-            inf_lower.setPos(pg.Point(0, 26.8))
-            graph_id.addItem(inf_lower)
+            self.draw_graph(cols,graph_id)
+            
         elif cols == 'MCHC':
-            inf_upper = pg.InfiniteLine(movable=False, angle=0, pen=(255, 0, 0), hoverPen=(0,200,0),label='{value:0.2f}%')
-            inf_upper.setPos(pg.Point(0, 35.2))
-            graph_id.addItem(inf_upper)
-            inf_lower = pg.InfiniteLine(movable=False, angle=0, pen=(255, 0, 0), hoverPen=(0,200,0),label='{value:0.2f}%')
-            inf_lower.setPos(pg.Point(0, 31.7))
-            graph_id.addItem(inf_lower)
+            self.draw_graph(cols,graph_id)
+            
         elif cols == 'MCHC':
-            inf_upper = pg.InfiniteLine(movable=False, angle=0, pen=(255, 0, 0), hoverPen=(0,200,0),label='{value:0.2f}%')
-            inf_upper.setPos(pg.Point(0, 35.2))
-            graph_id.addItem(inf_upper)
-            inf_lower = pg.InfiniteLine(movable=False, angle=0, pen=(255, 0, 0), hoverPen=(0,200,0),label='{value:0.2f}%')
-            inf_lower.setPos(pg.Point(0, 31.7))
-            graph_id.addItem(inf_lower)
+            self.draw_graph(cols,graph_id)
+            
         elif cols == 'WBC':
-            inf_upper = pg.InfiniteLine(movable=False, angle=0, pen=(255, 0, 0), hoverPen=(0,200,0),label='{value:0.2f}x10^2/μL')
-            inf_upper.setPos(pg.Point(0, 89))
-            graph_id.addItem(inf_upper)
-            inf_lower = pg.InfiniteLine(movable=False, angle=0, pen=(255, 0, 0), hoverPen=(0,200,0),label='{value:0.2f}x10^2/μL')
-            inf_lower.setPos(pg.Point(0, 38))
-            graph_id.addItem(inf_lower)
+            self.draw_graph(cols,graph_id)
+            
         elif cols == 'PLT':
-            inf_upper = pg.InfiniteLine(movable=False, angle=0, pen=(255, 0, 0), hoverPen=(0,200,0),label='{value:0.2f}x10^4/μL')
-            inf_upper.setPos(pg.Point(0, 36.5))
-            graph_id.addItem(inf_upper)
-            inf_lower = pg.InfiniteLine(movable=False, angle=0, pen=(255, 0, 0), hoverPen=(0,200,0),label='{value:0.2f}x10^4/μL')
-            inf_lower.setPos(pg.Point(0, 17.0))
-            graph_id.addItem(inf_lower)
+            self.draw_graph(cols,graph_id)
+
         else:
             pass
 
