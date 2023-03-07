@@ -154,16 +154,16 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def draw_graph(self,cols,graph_id):
             upper = cols+'_upper'
             lower = cols+'_lower'
-            cm2 = pg.colormap.get('jet', source='matplotlib')# for example
-            cm = pg.colormap.get('CET-L19')
+            cm2 = pg.colormap.get('Reds', source='matplotlib')# for example
+            #cm = pg.colormap.get('CET-L19')
             #cm2 = pg.colormap.get('CET-L19')
-            #cm.setMappingMode('repeat') # set mapping mode
+            cm2.setMappingMode('MIRROR') # set mapping mode
             center_num = ((standard_data[cols][1]-standard_data[cols][0])/2)
-            pen0 = cm.getPen( span=(-1*standard_data[cols][0], standard_data[cols][1]), width=2)
-            #brush0 = cm2.getBrush( span=(8,49),orientation='horizontal')
+            pen0 = cm2.getPen( span=(standard_data[cols][0], standard_data[cols][1]), width=2)
+            brush0 = cm2.getBrush( span=(8,49),orientation='horizontal')
             #print(brush0)
-            graph_id.addItem(pg.PlotDataItem(self.dt, self.df[cols], pen=pen0, symbol='o', symbolPen=None,symbolBrush=(200,  200,   200),symbolSize=10))
-            graph_id.addItem(pg.PlotDataItem(self.dt, self.df[cols].rolling(5).mean(), pen=pg.mkPen((255,255,255,128), width=5)))
+            graph_id.addItem(pg.PlotDataItem(self.dt, self.df[cols], pen=pen0, symbol='o', symbolPen=pen0, symbolBrush=brush0,symbolSize=10))
+            graph_id.addItem(pg.PlotDataItem(self.dt, self.df[cols].rolling(5).mean(), pen=pg.mkPen((255,255,255,208), width=5)))
             self.df[upper]=standard_data[cols][1]
             self.df[lower]=standard_data[cols][0]
 
