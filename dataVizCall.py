@@ -103,21 +103,25 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.dt = self.df.index.astype(np.int64)//10**9
 
         self.cols=df.columns
-        self.num_of_cols = 6
+        self.num_of_cols = 4
         minx = self.dt[-30]
         maxx = self.dt[-1]
 
-        self.set_graph_ui(self.cols, self.num_of_cols,minx,maxx)
-        self.plot_region(self.num_of_cols)
-        self.region.sigRegionChanged.connect(self.update_region_change)
-        #self.region.sigRegionChanged.connect(lambda: self.update_region_change())
-        self.region.setRegion([minx, maxx])
-                
+        self.plot_xy(self.cols, self.num_of_cols,minx,maxx)
+        self.spinBox.valueChanged.connect(lambda: self.plot_xy(self.cols, self.num_of_cols,minx,maxx))
+
+    def test(self):
+        print(self.spinBox.value())
 
     def init_ui(self):
         # Windowサイズを設定
-        self.setGeometry(100, 100, 2280, 1768)
+        self.setGeometry(100, 100, 1920, 1200)
 
+    def plot_xy(self,cols, num_of_cols,minx,maxx):
+        self.set_graph_ui(cols, num_of_cols,minx,maxx)
+        self.plot_region(num_of_cols)
+        self.region.sigRegionChanged.connect(self.update_region_change)
+        self.region.setRegion([minx, maxx])
 
     def plot_region(self, num_of_cols):
         setprop_region = lambda x: (x.setAutoVisible(y=True),
@@ -127,15 +131,15 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                                     x.getAxis('right').setHeight(0))
         region = pg.LinearRegionItem() # http://www.pyqtgraph.org/documentation/graphicsItems/linearregionitem.html
         
-        plt_region = self.graphicsView.addPlot(axisItems={'bottom': TimeAxisItem(orientation='bottom')},row=4,col=0, colspan=num_of_cols)
-        plt_region.layout.setRowStretchFactor(4, 1)
+        plt_region = self.graphicsView.addPlot(axisItems={'bottom': TimeAxisItem(orientation='bottom')},row=4,col=2, colspan=num_of_cols-2)
+        #plt_region.layout.setRowStretchFactor(1, 0.5)
         plt_region.addItem(region, ignoreBounds=True)
         setprop_region(plt_region)
         plt_region.plot(x=self.dt, y=self.df['血圧（最低）'])
-
         self.region = region
         
     def set_graph_ui(self,cols, num_of_cols, minx, maxx):
+        self.graphicsView.clear()
         # colsは、表示するデータの種類（以下のとおり）
         # '血圧（最高）', '血圧（最低）', '脈拍', 'ALT（GPT）', 'γ-GTP', '総蛋白TP', 'アルブミンALB', 'ALB/G', 'CHOL', 'GALB', 'RBC', 'Hb', 'Ht', 'MCV', 'MCH', 'MCHC', 'WBC', 'PLT'
         # 18種あります。
@@ -187,9 +191,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
             try:
                 unit = standard_data[cols][2]
-                pen0 = cm2.getPen( span=(standard_data[cols][0], standard_data[cols][1]), width=2)
-                graph_id.addItem(pg.PlotDataItem(self.dt, self.df[cols], pen=pen0, symbol='o', symbolPen=None, symbolBrush=pg.mkBrush(255,255,255,150), symbolSize=10))
-                graph_id.addItem(pg.PlotDataItem(self.dt, self.df[cols].rolling(5).mean(), pen=pg.mkPen((255,255,0,150), width=5)))
+                pen0 = cm2.getPen( span=(standard_data[cols][0], standard_data[cols][1]), width=3)
+                graph_id.addItem(pg.PlotDataItem(self.dt, self.df[cols], pen=pen0, symbol='o', symbolPen=(255,255,255), symbolBrush=pg.mkBrush(255,255,255,150), symbolSize=10))
+                graph_id.addItem(pg.PlotDataItem(self.dt, self.df[cols].rolling(self.spinBox.value()).mean(), pen=pg.mkPen((255,255,0,150), width=5)))
                 self.df[lower]=standard_data[cols][0]
                 self.df[upper]=standard_data[cols][1]
             
@@ -210,8 +214,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 unit = standard_data[cols][1]
                 self.df[upper]=standard_data[cols][0]
                 pen0 = cm2.getPen( span=(0, standard_data[cols][0]), width=2)
-                graph_id.addItem(pg.PlotDataItem(self.dt, self.df[cols], pen=pen0, symbol='o', symbolPen=None, symbolBrush=pg.mkBrush(255,255,255,150), symbolSize=10))
-                graph_id.addItem(pg.PlotDataItem(self.dt, self.df[cols].rolling(5).mean(), pen=pg.mkPen((255,255,0,150), width=5)))
+                graph_id.addItem(pg.PlotDataItem(self.dt, self.df[cols], pen=pen0, symbol='o', symbolPen=(255,255,255), symbolBrush=pg.mkBrush(255,255,255,150), symbolSize=10))
+                graph_id.addItem(pg.PlotDataItem(self.dt, self.df[cols].rolling(self.spinBox.value()).mean(), pen=pg.mkPen((255,255,0,150), width=5)))
                 inf_upper = pg.InfiniteLine(movable=False, angle=0, pen=(0, 255, 0), hoverPen=(0,200,0),label='{value:0.2f} '+unit)
                 inf_upper.setPos(pg.Point(0, standard_data[cols][0]))
                 graph_id.addItem(inf_upper)
@@ -229,7 +233,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         
         #print(minx,maxx)
         #self.plot_xy(self.cols, self.num_of_cols,minx, maxx)
-
 
     def update_region(self, window, viewRange):
         self.region.setRegion(viewRange[0])
