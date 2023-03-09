@@ -3,6 +3,8 @@ from PySide6.QtWidgets import QApplication, QMainWindow
 from PySide6 import QtGui
 from PySide6.QtGui import QPen, QColor
 
+import sqlite3
+
 import pandas as pd
 import numpy as np
 import pyqtgraph as pg
@@ -97,22 +99,39 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         super().__init__()
         self.setupUi(self)
         self.init_ui()
-
+        '''
+        # csvファイルを読み込み
         df = pd.read_csv('./blood_data.csv', index_col=0,usecols=[0,*range(2, 20)])
         df_ascending = df.set_index(pd.to_datetime(df.index, format='%Y-%m-%d'))
         self.df = df_ascending.sort_index(axis='index',ascending=True)
+        #
+        '''
+        # SQLite3のdbを読み込み
+        with sqlite3.connect('./blood_data.db') as conn:
+            df = pd.read_sql('select * from blood_data', con=conn)
+            df['donation_date'] = pd.to_datetime(df['donation_date'])
+            df = df.drop(['献血種別'], axis=1)
+            df2 = df.set_index(['donation_date'])        
+            df2.index.name = None
+            #df2['血圧（最高）'] = df2['血圧（最高）'].astype(float)
+            #df2['血圧（最低）'] = df2['血圧（最低）'].astype(float)
+            #df2['脈拍'] = df2['脈拍'].astype(float)
+
+        
+        self.df = df2.sort_index(axis='index',ascending=True)
         self.dt = self.df.index.astype(np.int64)//10**9
 
-        self.cols=df.columns
+        self.cols=df2.columns
         self.num_of_cols = 4
         minx = self.dt[-30]
         maxx = self.dt[-1]
 
         self.plot_xy(self.cols, self.num_of_cols,minx,maxx)
+        #self.test(self.cols)
         self.spinBox.valueChanged.connect(lambda: self.plot_xy(self.cols, self.num_of_cols,minx,maxx))
 
-    def test(self):
-        print(self.spinBox.value())
+    def test(self, cols):
+        print(cols)
 
     def init_ui(self):
         # Windowサイズを設定
@@ -183,43 +202,43 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 self.graphicsView.nextRow()
 
     def draw_graph(self,cols,graph_id):
-            upper = cols+'_upper'
-            lower = cols+'_lower'
-            #cm2 = pg.colormap.get('YlOrRd', source='matplotlib')# for example
-            cm2 = pg.colormap.get('CET-D11')# for example
-            cm2.setMappingMode('MIRROR') # set mapping mode
-            brushes = [0.5, (0,205,0, 25), 0.5]
+        upper = cols+'_upper'
+        lower = cols+'_lower'
+        #cm2 = pg.colormap.get('YlOrRd', source='matplotlib')# for example
+        cm2 = pg.colormap.get('CET-D11')# for example
+        cm2.setMappingMode('MIRROR') # set mapping mode
+        brushes = [0.5, (0,205,0, 25), 0.5]
 
-            try:
-                unit = standard_data[cols][2]
-                pen0 = cm2.getPen( span=(standard_data[cols][0], standard_data[cols][1]), width=3)
-                graph_id.addItem(pg.PlotDataItem(self.dt, self.df[cols], pen=pen0, symbol='o', symbolPen=(255,255,255), symbolBrush=pg.mkBrush(255,255,255,150), symbolSize=10))
-                graph_id.addItem(pg.PlotDataItem(self.dt, self.df[cols].rolling(self.spinBox.value()).mean(), pen=pg.mkPen((255,255,0,150), width=5)))
-                self.df[lower]=standard_data[cols][0]
-                self.df[upper]=standard_data[cols][1]
-            
-                upper = pg.PlotDataItem(self.dt, self.df[upper], pen='g', symbol=None)
-                lower = pg.PlotDataItem(self.dt, self.df[lower], pen='g', symbol=None)
-                graph_id.addItem(upper)
-                graph_id.addItem(lower)
-                fills = pg.FillBetweenItem(upper, lower, brushes[1])
-                fills.setZValue(-100)
-                graph_id.addItem(fills)
-                inf_upper = pg.InfiniteLine(movable=False, angle=0, pen=(0, 255, 0), hoverPen=(0,200,0),label='{value:0.2f} '+unit)
-                inf_lower = pg.InfiniteLine(movable=False, angle=0, pen=(0, 255, 0), hoverPen=(0,200,0),label='{value:0.2f} '+unit)
-                inf_upper.setPos(pg.Point(0, standard_data[cols][1]))
-                inf_lower.setPos(pg.Point(0, standard_data[cols][0]))
-                graph_id.addItem(inf_upper)
-                graph_id.addItem(inf_lower)
-            except:
-                unit = standard_data[cols][1]
-                self.df[upper]=standard_data[cols][0]
-                pen0 = cm2.getPen( span=(0, standard_data[cols][0]), width=2)
-                graph_id.addItem(pg.PlotDataItem(self.dt, self.df[cols], pen=pen0, symbol='o', symbolPen=(255,255,255), symbolBrush=pg.mkBrush(255,255,255,150), symbolSize=10))
-                graph_id.addItem(pg.PlotDataItem(self.dt, self.df[cols].rolling(self.spinBox.value()).mean(), pen=pg.mkPen((255,255,0,150), width=5)))
-                inf_upper = pg.InfiniteLine(movable=False, angle=0, pen=(0, 255, 0), hoverPen=(0,200,0),label='{value:0.2f} '+unit)
-                inf_upper.setPos(pg.Point(0, standard_data[cols][0]))
-                graph_id.addItem(inf_upper)
+        try:
+            unit = standard_data[cols][2]
+            pen0 = cm2.getPen( span=(standard_data[cols][0], standard_data[cols][1]), width=3)
+            graph_id.addItem(pg.PlotDataItem(self.dt, self.df[cols], pen=pen0, symbol='o', symbolPen=(255,255,255), symbolBrush=pg.mkBrush(255,255,255,150), symbolSize=10))
+            graph_id.addItem(pg.PlotDataItem(self.dt, self.df[cols].rolling(self.spinBox.value()).mean(), pen=pg.mkPen((255,255,0,150), width=5)))
+            self.df[lower]=standard_data[cols][0]
+            self.df[upper]=standard_data[cols][1]
+        
+            upper = pg.PlotDataItem(self.dt, self.df[upper], pen='g', symbol=None)
+            lower = pg.PlotDataItem(self.dt, self.df[lower], pen='g', symbol=None)
+            graph_id.addItem(upper)
+            graph_id.addItem(lower)
+            fills = pg.FillBetweenItem(upper, lower, brushes[1])
+            fills.setZValue(-100)
+            graph_id.addItem(fills)
+            inf_upper = pg.InfiniteLine(movable=False, angle=0, pen=(0, 255, 0), hoverPen=(0,200,0),label='{value:0.2f} '+unit)
+            inf_lower = pg.InfiniteLine(movable=False, angle=0, pen=(0, 255, 0), hoverPen=(0,200,0),label='{value:0.2f} '+unit)
+            inf_upper.setPos(pg.Point(0, standard_data[cols][1]))
+            inf_lower.setPos(pg.Point(0, standard_data[cols][0]))
+            graph_id.addItem(inf_upper)
+            graph_id.addItem(inf_lower)
+        except:
+            unit = standard_data[cols][1]
+            self.df[upper]=standard_data[cols][0]
+            pen0 = cm2.getPen( span=(0, standard_data[cols][0]), width=2)
+            graph_id.addItem(pg.PlotDataItem(self.dt, self.df[cols], pen=pen0, symbol='o', symbolPen=(255,255,255), symbolBrush=pg.mkBrush(255,255,255,150), symbolSize=10))
+            graph_id.addItem(pg.PlotDataItem(self.dt, self.df[cols].rolling(self.spinBox.value()).mean(), pen=pg.mkPen((255,255,0,150), width=5)))
+            inf_upper = pg.InfiniteLine(movable=False, angle=0, pen=(0, 255, 0), hoverPen=(0,200,0),label='{value:0.2f} '+unit)
+            inf_upper.setPos(pg.Point(0, standard_data[cols][0]))
+            graph_id.addItem(inf_upper)
 
 
 
