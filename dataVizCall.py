@@ -99,7 +99,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.init_ui()
 
         df = pd.read_csv('./blood_data.csv', index_col=0,usecols=[0,*range(2, 20)])
-        self.df = df.set_index(pd.to_datetime(df.index, format='%Y-%m-%d'))
+        df_ascending = df.set_index(pd.to_datetime(df.index, format='%Y-%m-%d'))
+        self.df = df_ascending.sort_index(axis='index',ascending=True)
         self.dt = self.df.index.astype(np.int64)//10**9
 
         self.cols=df.columns

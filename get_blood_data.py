@@ -57,9 +57,9 @@ driver = webdriver.Chrome()
 
 # 待ち時間の設定
 # ページ遷移を伴う場合
-wait_for_page = 1.5
+wait_for_page = 3
 # ページ遷移を伴わない場合
-wait_for_nopage = 1
+wait_for_nopage = 2
 
 
 def login_and_get_param():
@@ -227,7 +227,7 @@ def main():
     date = dt(2009, 3, 14)
     df = df[df.index > date]
     #print(tabulate(df, df.columns,tablefmt='github', showindex=True))
-    df.sort_index(axis='index',ascending=False)
+    df.sort_index(axis='index',ascending=True)
     df.to_csv('./blood_data.csv')
     driver.quit()
 
