@@ -117,6 +117,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             #df2['血圧（最低）'] = df2['血圧（最低）'].astype(float)
             #df2['脈拍'] = df2['脈拍'].astype(float)
 
+
+
         
         self.df = df2.sort_index(axis='index',ascending=True)
         self.dt = self.df.index.astype(np.int64)//10**9
@@ -211,7 +213,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         try:
             unit = standard_data[cols][2]
-            pen0 = cm2.getPen( span=(standard_data[cols][0], standard_data[cols][1]), width=3)
+            pen0 = cm2.getPen( span=(standard_data[cols][0], standard_data[cols][1]), width=5)
             graph_id.addItem(pg.PlotDataItem(self.dt, self.df[cols], pen=pen0, symbol='o', symbolPen=(255,255,255), symbolBrush=pg.mkBrush(255,255,255,150), symbolSize=10))
             graph_id.addItem(pg.PlotDataItem(self.dt, self.df[cols].rolling(self.spinBox.value()).mean(), pen=pg.mkPen((255,255,0,150), width=5)))
             self.df[lower]=standard_data[cols][0]

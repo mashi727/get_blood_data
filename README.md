@@ -60,6 +60,8 @@ selenium.common.exceptions.StaleElementReferenceException: Message: stale elemen
 ラブラッドサイトの解析は、Selenium IDEを使用しました。
 これがなかったら、解析の時間がもっとかかっていたと思われます。
 
+![](imgs/seleniumIDE.gif)
+
 
 ## csv2sqlite3.py
 
