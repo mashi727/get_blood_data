@@ -116,7 +116,22 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             #df2['血圧（最高）'] = df2['血圧（最高）'].astype(float)
             #df2['血圧（最低）'] = df2['血圧（最低）'].astype(float)
             #df2['脈拍'] = df2['脈拍'].astype(float)
-
+            import random
+            df2['ALT（GPT）'] = df2['ALT（GPT）']*random.uniform(0.9, 1.1)
+            df2['γ-GTP'] = df2['γ-GTP']*random.uniform(0.9, 1.1)
+            df2['総蛋白TP'] = df2['総蛋白TP']*random.uniform(0.9, 1.1)
+            df2['アルブミンALB'] = df2['アルブミンALB']*random.uniform(0.9, 1.1)
+            df2['ALB/G'] = df2['ALB/G']*random.uniform(0.9, 1.1)
+            df2['CHOL'] = df2['CHOL']*random.uniform(0.5, 1)
+            df2['GALB'] = df2['GALB']*random.uniform(0.9, 1.1)
+            df2['RBC'] = df2['RBC']*random.uniform(0.9, 1.1)
+            df2['Hb'] = df2['Hb']*random.uniform(0.9, 1.1)
+            df2['Ht'] = df2['Ht']*random.uniform(0.9, 1.1)
+            df2['MCV'] = df2['MCV']*random.uniform(0.9, 1.1)
+            df2['MCH'] = df2['MCH']*random.uniform(0.9, 1.1)
+            df2['MCHC'] = df2['MCHC']*random.uniform(0.9, 1.1)
+            df2['WBC'] = df2['WBC']*random.uniform(0.9, 1.1)
+            df2['PLT'] = df2['PLT']*random.uniform(0.9, 1.1)
 
 
         

@@ -177,7 +177,7 @@ def get_data(times, num_of_kenketsu_all):
         pass
 
 def main():
-    # ログインして2009.3.15以降とすべての献血回数を求める。
+    # ログインして2009.3.15以降の献血回数とすべての献血回数を求める。
     num_of_kenketsu, num_of_kenketsu_all = login_and_get_param()
     # 血液データの種別を格納するリストをもとにdataframeを作成する。
     cols = ['献血種別','血圧（最高）','血圧（最低）','脈拍','ALT（GPT）','γ-GTP','総蛋白TP','アルブミンALB','ALB/G','CHOL','GALB','RBC','Hb','Ht','MCV','MCH','MCHC','WBC','PLT']
