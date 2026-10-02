@@ -1,5 +1,5 @@
 献血の検査結果を@長い期間で見渡す
-	:comment 問題：サイトでは一度に 3 回分だけ
+	:comment 課題：サイトでは一度に 3 回分だけ
 	:comment 方針：全回分を取り DB にして描く
 	検査結果を取得する@$ python get_blood_data.py
 		.password を読み@ラブラッドにログインする
